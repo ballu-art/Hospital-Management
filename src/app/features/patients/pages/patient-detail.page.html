@@ -1,0 +1,217 @@
+@if (error()) {
+  <app-error-state [message]="error()" [retryable]="true" (retry)="load()" />
+} @else if (loading()) {
+  <app-loading-state message="Loading patient…" />
+} @else if (patient(); as p) {
+  <app-page-header
+    [title]="fullName(p)"
+    [subtitle]="p.medicalRecordNumber + ' · ' + (p.dateOfBirth | age) + ' years · ' + p.gender"
+  >
+    <app-status-chip [status]="p.status" />
+    @if (auth.can('patients:write')) {
+      <a mat-stroked-button [routerLink]="['/patients', p.id, 'edit']">
+        <mat-icon aria-hidden="true">edit</mat-icon>
+        Edit
+      </a>
+    }
+  </app-page-header>
+
+  <mat-tab-group animationDuration="0ms">
+    <mat-tab label="Overview">
+      <div class="tab app-grid cols">
+        <section class="app-card">
+          <h2>Demographics</h2>
+          <dl>
+            <dt>Date of birth</dt>
+            <dd>{{ p.dateOfBirth | date: 'mediumDate' }}</dd>
+            <dt>Gender</dt>
+            <dd>{{ p.gender }}</dd>
+            <dt>Registered</dt>
+            <dd>{{ p.registrationDate | date: 'mediumDate' }}</dd>
+          </dl>
+        </section>
+        <section class="app-card">
+          <h2>Contact</h2>
+          <dl>
+            <dt>Phone</dt>
+            <dd>{{ p.phone }}</dd>
+            <dt>Email</dt>
+            <dd>{{ p.email || '—' }}</dd>
+            <dt>Address</dt>
+            <dd>{{ p.address }}</dd>
+          </dl>
+        </section>
+        <section class="app-card">
+          <h2>Emergency contact</h2>
+          <dl>
+            <dt>Name</dt>
+            <dd>{{ p.emergencyContact.name }} ({{ p.emergencyContact.relationship }})</dd>
+            <dt>Phone</dt>
+            <dd>{{ p.emergencyContact.phone }}</dd>
+          </dl>
+        </section>
+      </div>
+    </mat-tab>
+
+    @if (auth.can('appointments:read')) {
+      <mat-tab label="Appointments">
+        <div class="tab">
+          @if (appointments().length === 0) {
+            <app-empty-state
+              icon="event"
+              title="No appointments"
+              message="This patient has no appointments yet."
+            />
+          } @else {
+            <div class="table-scroll">
+              <table class="simple">
+                <thead>
+                  <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Doctor</th>
+                    <th scope="col">Reason</th>
+                    <th scope="col">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (a of appointments(); track a.id) {
+                    <tr>
+                      <td>{{ a.date | date: 'mediumDate' }}</td>
+                      <td>{{ a.time }}</td>
+                      <td>{{ doctors.label(a.doctorId) }}</td>
+                      <td>{{ a.reason }}</td>
+                      <td><app-status-chip [status]="a.status" /></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </mat-tab>
+    }
+
+    @if (auth.can('billing:read')) {
+      <mat-tab label="Billing">
+        <div class="tab">
+          <p class="summary">
+            Billed <strong>{{ billing().billed | currency: currency }}</strong> · Paid
+            <strong>{{ billing().paid | currency: currency }}</strong> · Balance
+            <strong>{{ billing().balance | currency: currency }}</strong>
+          </p>
+          @if (bills().length === 0) {
+            <app-empty-state
+              icon="receipt_long"
+              title="No invoices"
+              message="No billing records for this patient."
+            />
+          } @else {
+            <div class="table-scroll">
+              <table class="simple">
+                <thead>
+                  <tr>
+                    <th scope="col">Invoice</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">Paid</th>
+                    <th scope="col">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (b of bills(); track b.id) {
+                    <tr>
+                      <td>{{ b.invoiceNumber }}</td>
+                      <td>{{ b.description }}</td>
+                      <td>{{ b.amount | currency: currency }}</td>
+                      <td>{{ b.paidAmount | currency: currency }}</td>
+                      <td><app-status-chip [status]="b.status" /></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </mat-tab>
+    }
+
+    <mat-tab label="Medical history">
+      <div class="tab">
+        @if (auth.can('clinical:write')) {
+          <form
+            class="app-card record-form"
+            [formGroup]="recordForm"
+            (ngSubmit)="addRecord()"
+            novalidate
+          >
+            <h2>Add diagnosis, prescription or note</h2>
+            <div class="app-form-grid">
+              <mat-form-field>
+                <mat-label>Type</mat-label>
+                <mat-select formControlName="type">
+                  @for (t of recordTypes; track t) {
+                    <mat-option [value]="t">{{ t }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>Recorded by</mat-label>
+                <mat-select formControlName="doctorId">
+                  @for (o of doctors.items().values(); track o.id) {
+                    <mat-option [value]="o.id">{{ doctors.label(o.id) }}</mat-option>
+                  }
+                </mat-select>
+                <mat-error>Select a doctor.</mat-error>
+              </mat-form-field>
+              <mat-form-field class="full-width">
+                <mat-label>Title</mat-label>
+                <input matInput formControlName="title" />
+                <mat-error>Enter a title (up to 100 characters).</mat-error>
+              </mat-form-field>
+              <mat-form-field class="full-width">
+                <mat-label>Details</mat-label>
+                <textarea matInput rows="3" formControlName="details"></textarea>
+                <mat-error>Enter details (up to 500 characters).</mat-error>
+              </mat-form-field>
+            </div>
+            <button mat-flat-button type="submit" [disabled]="savingRecord()">
+              {{ savingRecord() ? 'Saving…' : 'Add to history' }}
+            </button>
+          </form>
+        }
+        @if (records().length === 0) {
+          <app-empty-state
+            icon="history_edu"
+            title="No medical history"
+            message="Diagnoses, prescriptions and notes appear here."
+          />
+        } @else {
+          <ul class="timeline">
+            @for (r of records(); track r.id) {
+              <li class="app-card">
+                <div class="meta">
+                  <app-status-chip
+                    [status]="
+                      r.type === 'Diagnosis'
+                        ? 'Open'
+                        : r.type === 'Prescription'
+                          ? 'Ordered'
+                          : 'Draft'
+                    "
+                  />
+                  <span class="text-muted"
+                    >{{ r.type }} · {{ r.recordedOn | date: 'mediumDate' }} ·
+                    {{ doctors.label(r.doctorId) }}</span
+                  >
+                </div>
+                <h3>{{ r.title }}</h3>
+                <p>{{ r.details }}</p>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+}

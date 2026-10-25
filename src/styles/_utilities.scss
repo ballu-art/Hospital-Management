@@ -1,0 +1,101 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--app-color-bg);
+  color: var(--app-color-text);
+  font-family: var(--app-font-family);
+  font-size: var(--app-font-size-md);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: 500;
+}
+
+:focus-visible {
+  outline: 3px solid var(--app-color-focus);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--app-space-2);
+  top: -64px;
+  z-index: 1000;
+  padding: var(--app-space-2) var(--app-space-4);
+  background: var(--app-color-primary);
+  color: var(--app-color-on-primary);
+  border-radius: var(--app-radius-sm);
+  &:focus {
+    top: var(--app-space-2);
+  }
+}
+
+.app-card {
+  background: var(--app-color-surface);
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-lg);
+  box-shadow: var(--app-elevation-1);
+  padding: var(--app-space-5);
+}
+
+.app-grid {
+  display: grid;
+  gap: var(--app-space-4);
+}
+
+.app-form-grid {
+  display: grid;
+  gap: 0 var(--app-space-4);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  .full-width {
+    grid-column: 1 / -1;
+  }
+}
+
+.text-muted {
+  color: var(--app-color-text-muted);
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+// Compact table density used by every data table.
+.mat-mdc-table {
+  --mat-table-row-item-container-height: 52px;
+  --mat-table-header-container-height: 48px;
+  background: transparent;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

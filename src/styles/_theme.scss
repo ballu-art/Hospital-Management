@@ -1,0 +1,34 @@
+@use '@angular/material' as mat;
+
+html {
+  color-scheme: light;
+  @include mat.theme(
+    (
+      color: (
+        theme-type: light,
+        primary: mat.$blue-palette,
+        tertiary: mat.$cyan-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+  // Map the brand tokens onto Material's system tokens.
+  @include mat.theme-overrides(
+    (
+      primary: var(--app-color-primary),
+      on-primary: var(--app-color-on-primary),
+      primary-container: var(--app-color-primary-soft),
+      on-primary-container: var(--app-color-primary),
+      secondary: var(--app-color-secondary),
+      on-secondary: var(--app-color-on-secondary),
+      secondary-container: var(--app-color-secondary-soft),
+      on-secondary-container: var(--app-color-secondary),
+      error: var(--app-color-error),
+      surface: var(--app-color-surface),
+      background: var(--app-color-bg),
+      on-surface: var(--app-color-text),
+      outline: var(--app-color-border),
+    )
+  );
+}

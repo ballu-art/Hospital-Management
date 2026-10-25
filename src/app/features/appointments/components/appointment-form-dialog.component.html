@@ -1,0 +1,87 @@
+<h2 mat-dialog-title>{{ heading }}</h2>
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <mat-dialog-content>
+    @if (saving()) {
+      <mat-progress-bar mode="indeterminate" aria-label="Saving appointment" />
+    }
+    <div class="app-form-grid">
+      <mat-form-field class="full-width">
+        <mat-label>Patient</mat-label>
+        <mat-select formControlName="patientId">
+          @for (p of patients.items().values(); track p.id) {
+            <mat-option [value]="p.id"
+              >{{ patients.label(p.id) }} ({{ p.medicalRecordNumber }})</mat-option
+            >
+          }
+        </mat-select>
+        <mat-error>{{ err(form.controls.patientId) }}</mat-error>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Department</mat-label>
+        <mat-select formControlName="departmentId">
+          @for (d of departments.items().values(); track d.id) {
+            <mat-option [value]="d.id">{{ d.name }}</mat-option>
+          }
+        </mat-select>
+        <mat-error>{{ err(form.controls.departmentId) }}</mat-error>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Doctor</mat-label>
+        <mat-select formControlName="doctorId">
+          @for (d of doctorOptions(); track d.id) {
+            <mat-option [value]="d.id" [disabled]="d.status === 'On leave'">
+              {{ doctors.label(d.id) }}{{ d.status === 'On leave' ? ' (on leave)' : '' }}
+            </mat-option>
+          }
+        </mat-select>
+        <mat-hint>Choose a department first.</mat-hint>
+        <mat-error>{{ err(form.controls.doctorId) }}</mat-error>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Date</mat-label>
+        <input matInput [matDatepicker]="picker" [min]="today" formControlName="date" />
+        <mat-datepicker-toggle matIconSuffix [for]="picker" />
+        <mat-datepicker #picker />
+        <mat-error>{{ err(form.controls.date) }}</mat-error>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Time</mat-label>
+        <mat-select formControlName="time">
+          @for (s of slots(); track s) {
+            <mat-option [value]="s">{{ s }}</mat-option>
+          } @empty {
+            <mat-option value="" disabled>Select doctor and date for free slots</mat-option>
+          }
+        </mat-select>
+        <mat-error>{{ err(form.controls.time) }}</mat-error>
+      </mat-form-field>
+      <mat-form-field class="full-width">
+        <mat-label>Reason for visit</mat-label>
+        <textarea matInput rows="2" formControlName="reason"></textarea>
+        <mat-error>{{ err(form.controls.reason) }}</mat-error>
+      </mat-form-field>
+      @if (data.mode === 'edit') {
+        <mat-form-field>
+          <mat-label>Status</mat-label>
+          <mat-select formControlName="status">
+            @for (s of statuses; track s) {
+              <mat-option [value]="s">{{ s }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+    </div>
+    @if (attempted() && form.invalid) {
+      <p class="error" role="alert">Please correct the highlighted fields.</p>
+    }
+    @if (serverError()) {
+      <p class="error" role="alert">{{ serverError() }}</p>
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancel</button>
+    <button mat-flat-button type="submit" [disabled]="saving()">
+      {{ saving() ? 'Saving…' : rescheduling ? 'Reschedule' : 'Save' }}
+    </button>
+  </mat-dialog-actions>
+</form>

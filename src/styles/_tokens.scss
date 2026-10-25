@@ -1,0 +1,65 @@
+// Central design tokens (CSS custom properties). Breakpoints live in _breakpoints.scss.
+:root {
+  // Brand
+  --app-color-primary: #0b3d91;
+  --app-color-on-primary: #ffffff;
+  --app-color-primary-soft: #e6edf9;
+  --app-color-secondary: #00796b;
+  --app-color-on-secondary: #ffffff;
+  --app-color-secondary-soft: #def3f0;
+
+  // Surfaces and text
+  --app-color-bg: #f3f5f9;
+  --app-color-surface: #ffffff;
+  --app-color-surface-alt: #f8fafc;
+  --app-color-border: #d5dce6;
+  --app-color-text: #1a2331;
+  --app-color-text-muted: #4b596b;
+  --app-color-focus: #0b5cad;
+
+  // Status (text on soft background meets WCAG AA)
+  --app-color-success: #17693a;
+  --app-color-success-soft: #e1f4e8;
+  --app-color-warning: #7a4b00;
+  --app-color-warning-soft: #fff0cf;
+  --app-color-error: #b3261e;
+  --app-color-error-soft: #fde7e5;
+  --app-color-info: #0b5cad;
+  --app-color-info-soft: #e0eefc;
+  --app-color-neutral: #46546a;
+  --app-color-neutral-soft: #e9edf3;
+
+  // Chart series
+  --app-chart-1: #0b3d91;
+  --app-chart-2: #00796b;
+  --app-chart-3: #b26a00;
+
+  // Spacing (4px scale)
+  --app-space-1: 4px;
+  --app-space-2: 8px;
+  --app-space-3: 12px;
+  --app-space-4: 16px;
+  --app-space-5: 24px;
+  --app-space-6: 32px;
+
+  // Radii
+  --app-radius-sm: 4px;
+  --app-radius-md: 8px;
+  --app-radius-lg: 12px;
+
+  // Elevation
+  --app-elevation-1: 0 1px 2px rgb(16 24 40 / 8%), 0 1px 3px rgb(16 24 40 / 6%);
+  --app-elevation-2: 0 4px 12px rgb(16 24 40 / 10%);
+
+  // Typography
+  --app-font-family: Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --app-font-size-sm: 0.8125rem;
+  --app-font-size-md: 0.9375rem;
+  --app-font-size-lg: 1.125rem;
+  --app-font-size-xl: 1.5rem;
+
+  // Layout
+  --app-sidebar-width: 272px;
+  --app-topbar-height: 64px;
+  --app-content-max-width: 1440px;
+}

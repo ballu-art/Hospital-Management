@@ -1,0 +1,75 @@
+<app-page-header title="Patients" subtitle="Search, filter and manage registered patients">
+  @if (auth.can('patients:write')) {
+    <a mat-flat-button routerLink="/patients/new">
+      <mat-icon aria-hidden="true">person_add</mat-icon>
+      Register patient
+    </a>
+  }
+</app-page-header>
+
+<section class="app-card" aria-label="Patient list">
+  <app-list-toolbar
+    searchLabel="Search by patient ID, name, phone or email"
+    [search]="list.search()"
+    [filters]="filters"
+    [filterValues]="list.filters()"
+    (searchChange)="list.typeSearch($event)"
+    (filterChange)="list.setFilter($event.key, $event.value)"
+  >
+    <mat-form-field class="date">
+      <mat-label>Registered from</mat-label>
+      <input matInput [matDatepicker]="fromPicker" [formControl]="from" />
+      <mat-datepicker-toggle matIconSuffix [for]="fromPicker" />
+      <mat-datepicker #fromPicker />
+    </mat-form-field>
+    <mat-form-field class="date">
+      <mat-label>Registered to</mat-label>
+      <input matInput [matDatepicker]="toPicker" [formControl]="to" />
+      <mat-datepicker-toggle matIconSuffix [for]="toPicker" />
+      <mat-datepicker #toPicker />
+    </mat-form-field>
+  </app-list-toolbar>
+
+  @if (list.status() === 'error') {
+    <app-error-state [message]="list.error()" [retryable]="true" (retry)="list.reload()" />
+  } @else if (list.status() === 'loading' && list.items().length === 0) {
+    <app-loading-state message="Loading patients…" />
+  } @else if (list.isEmpty()) {
+    @if (list.hasCriteria()) {
+      <app-empty-state
+        icon="search_off"
+        title="No matching patients"
+        message="Try a different search or clear the filters."
+      >
+        <button mat-stroked-button type="button" (click)="clear()">Clear search and filters</button>
+      </app-empty-state>
+    } @else {
+      <app-empty-state
+        icon="groups"
+        title="No patients registered"
+        message="Register the first patient to get started."
+      >
+        @if (auth.can('patients:write')) {
+          <a mat-flat-button routerLink="/patients/new">Register patient</a>
+        }
+      </app-empty-state>
+    }
+  } @else {
+    @if (list.status() === 'loading') {
+      <mat-progress-bar mode="indeterminate" aria-label="Refreshing patients" />
+    }
+    <app-data-table
+      caption="Patients"
+      [columns]="columns"
+      [rows]="list.items()"
+      [total]="list.total()"
+      [pageIndex]="list.pageIndex()"
+      [pageSize]="list.pageSize()"
+      [sort]="list.sort()"
+      [actions]="actions()"
+      (sortChange)="list.setSort($event)"
+      (pageChange)="list.setPage($event.pageIndex, $event.pageSize)"
+      (action)="onAction($event)"
+    />
+  }
+</section>

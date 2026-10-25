@@ -1,0 +1,89 @@
+<div class="table-scroll">
+  <table
+    mat-table
+    matSort
+    [dataSource]="rows()"
+    [matSortActive]="sort()?.active ?? ''"
+    [matSortDirection]="sort()?.direction ?? ''"
+    [attr.aria-label]="caption()"
+    (matSortChange)="onSort($event)"
+  >
+    @for (col of columns(); track col.key) {
+      <ng-container [matColumnDef]="col.key">
+        <th
+          mat-header-cell
+          *matHeaderCellDef
+          [mat-sort-header]="col.key"
+          [disabled]="!col.sortable"
+          [class.hide-sm]="col.hideBelow === 'sm'"
+          [class.hide-md]="col.hideBelow === 'md'"
+          [class.end]="col.align === 'end'"
+        >
+          {{ col.header }}
+        </th>
+        <td
+          mat-cell
+          *matCellDef="let row"
+          [class.hide-sm]="col.hideBelow === 'sm'"
+          [class.hide-md]="col.hideBelow === 'md'"
+          [class.end]="col.align === 'end'"
+        >
+          @if (col.chip) {
+            <app-status-chip [status]="text(col, row)" />
+          } @else if (col.link) {
+            <a [routerLink]="col.link(row)">{{ text(col, row) }}</a>
+          } @else {
+            {{ text(col, row) }}
+          }
+        </td>
+      </ng-container>
+    }
+    <ng-container matColumnDef="__actions">
+      <th mat-header-cell *matHeaderCellDef class="actions-col">
+        <span class="visually-hidden">Actions</span>
+      </th>
+      <td mat-cell *matCellDef="let row" class="actions-col">
+        @if (visibleActions(row).length) {
+          <button
+            mat-icon-button
+            type="button"
+            [matMenuTriggerFor]="rowMenu"
+            [matMenuTriggerData]="{ row: row }"
+            aria-label="Row actions"
+          >
+            <mat-icon aria-hidden="true">more_vert</mat-icon>
+          </button>
+        }
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
+  </table>
+</div>
+
+<mat-menu #rowMenu="matMenu">
+  <ng-template matMenuContent let-row="row">
+    @for (a of visibleActions(row); track a.id) {
+      <button
+        mat-menu-item
+        type="button"
+        [class.destructive]="a.destructive"
+        (click)="action.emit({ id: a.id, row: row })"
+      >
+        <mat-icon aria-hidden="true">{{ a.icon }}</mat-icon>
+        <span>{{ a.label }}</span>
+      </button>
+    }
+  </ng-template>
+</mat-menu>
+
+<mat-paginator
+  [length]="total()"
+  [pageIndex]="pageIndex()"
+  [pageSize]="pageSize()"
+  [pageSizeOptions]="pageSizeOptions()"
+  showFirstLastButtons
+  aria-label="Select page of results"
+  (page)="onPage($event)"
+/>

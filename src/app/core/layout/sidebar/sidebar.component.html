@@ -1,0 +1,51 @@
+<nav aria-label="Main navigation">
+  <ul class="nav-list">
+    @for (item of items(); track item.label) {
+      <li>
+        @if (item.children) {
+          <button
+            type="button"
+            class="nav-item group"
+            [attr.aria-expanded]="isExpanded(item)"
+            [attr.aria-controls]="'nav-group-' + $index"
+            (click)="toggle(item)"
+          >
+            <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+            <span class="label">{{ item.label }}</span>
+            <mat-icon aria-hidden="true" class="chevron">{{
+              isExpanded(item) ? 'expand_less' : 'expand_more'
+            }}</mat-icon>
+          </button>
+          @if (isExpanded(item)) {
+            <ul class="nav-list nested" [id]="'nav-group-' + $index">
+              @for (child of item.children; track child.label) {
+                <li>
+                  <a
+                    class="nav-item"
+                    [routerLink]="child.route"
+                    routerLinkActive="active"
+                    ariaCurrentWhenActive="page"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                  >
+                    <mat-icon aria-hidden="true">{{ child.icon }}</mat-icon>
+                    <span class="label">{{ child.label }}</span>
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        } @else {
+          <a
+            class="nav-item"
+            [routerLink]="item.route"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+          >
+            <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+            <span class="label">{{ item.label }}</span>
+          </a>
+        }
+      </li>
+    }
+  </ul>
+</nav>

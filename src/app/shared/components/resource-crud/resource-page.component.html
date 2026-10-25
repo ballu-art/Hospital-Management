@@ -1,0 +1,74 @@
+<app-page-header [title]="config().title" [subtitle]="config().subtitle">
+  @for (a of toolbarActions(); track a.id) {
+    <button mat-stroked-button type="button" [disabled]="busy()" (click)="runToolbar(a)">
+      <mat-icon aria-hidden="true">{{ a.icon }}</mat-icon>
+      {{ a.label }}
+    </button>
+  }
+  @if (canWrite()) {
+    <button mat-flat-button type="button" (click)="openForm(null)">
+      <mat-icon aria-hidden="true">add</mat-icon>
+      Add {{ config().singular.toLowerCase() }}
+    </button>
+  }
+</app-page-header>
+
+<ng-content />
+
+<section class="app-card" [attr.aria-label]="config().title + ' list'">
+  <app-list-toolbar
+    [searchLabel]="config().searchLabel"
+    [search]="list.search()"
+    [filters]="config().filters ?? []"
+    [filterValues]="list.filters()"
+    (searchChange)="list.typeSearch($event)"
+    (filterChange)="list.setFilter($event.key, $event.value)"
+  />
+
+  @if (list.status() === 'error') {
+    <app-error-state [message]="list.error()" [retryable]="true" (retry)="list.reload()" />
+  } @else if (list.status() === 'loading' && list.items().length === 0) {
+    <app-loading-state [message]="'Loading ' + config().title.toLowerCase() + '…'" />
+  } @else if (list.isEmpty()) {
+    @if (list.hasCriteria()) {
+      <app-empty-state
+        icon="search_off"
+        title="No matching records"
+        message="Try a different search or clear the filters."
+      >
+        <button mat-stroked-button type="button" (click)="list.clearCriteria()">
+          Clear search and filters
+        </button>
+      </app-empty-state>
+    } @else {
+      <app-empty-state
+        [icon]="config().icon"
+        [title]="'No ' + config().title.toLowerCase() + ' yet'"
+        message="Records you add will appear here."
+      >
+        @if (canWrite()) {
+          <button mat-flat-button type="button" (click)="openForm(null)">
+            Add {{ config().singular.toLowerCase() }}
+          </button>
+        }
+      </app-empty-state>
+    }
+  } @else {
+    @if (list.status() === 'loading') {
+      <mat-progress-bar mode="indeterminate" aria-label="Refreshing" />
+    }
+    <app-data-table
+      [caption]="config().title"
+      [columns]="config().columns"
+      [rows]="list.items()"
+      [total]="list.total()"
+      [pageIndex]="list.pageIndex()"
+      [pageSize]="list.pageSize()"
+      [sort]="list.sort()"
+      [actions]="rowActions()"
+      (sortChange)="list.setSort($event)"
+      (pageChange)="onPage($event)"
+      (action)="onAction($event)"
+    />
+  }
+</section>

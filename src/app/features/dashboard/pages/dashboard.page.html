@@ -1,0 +1,243 @@
+<app-page-header title="Dashboard" subtitle="Administrative overview">
+  @if (auth.can('patients:write')) {
+    <a mat-flat-button routerLink="/patients/new">
+      <mat-icon aria-hidden="true">person_add</mat-icon>
+      Register patient
+    </a>
+  }
+  @if (auth.can('appointments:write')) {
+    <a mat-stroked-button routerLink="/appointments" [queryParams]="{ book: 1 }">
+      <mat-icon aria-hidden="true">event</mat-icon>
+      Book appointment
+    </a>
+  }
+</app-page-header>
+
+<p class="sample-note" role="note">
+  <mat-icon aria-hidden="true">info</mat-icon>
+  Sample data: every figure on this page is generated from fictional demo records, not live hospital
+  data.
+</p>
+
+@if (error()) {
+  <app-error-state [message]="error()" [retryable]="true" (retry)="load()" />
+} @else if (loading() && !data()) {
+  <app-loading-state message="Loading dashboard…" />
+} @else if (data(); as d) {
+  <section class="stats" aria-label="Key figures">
+    @if (auth.can('patients:read')) {
+      <app-stat-card
+        label="Active patients"
+        icon="groups"
+        [value]="d.activePatients"
+        [hint]="d.totalPatients + ' registered in total'"
+        route="/patients"
+      />
+    }
+    @if (auth.can('appointments:read')) {
+      <app-stat-card
+        label="Today's appointments"
+        icon="event"
+        tone="info"
+        [value]="d.todayAppointments"
+        [hint]="d.todayCompleted + ' completed'"
+        route="/appointments"
+      />
+    }
+    <app-stat-card
+      label="Available doctors"
+      icon="stethoscope"
+      tone="success"
+      [value]="d.availableDoctors"
+      [hint]="'of ' + d.totalDoctors + ' doctors'"
+    />
+    @if (auth.can('admissions:read')) {
+      <app-stat-card
+        label="Beds occupied"
+        icon="bed"
+        tone="warning"
+        [value]="d.bedsOccupied"
+        [hint]="d.bedsAvailable + ' available of ' + d.bedsTotal"
+        route="/admissions/beds"
+      />
+    }
+    @if (auth.can('billing:read')) {
+      <app-stat-card
+        label="Collected (30 days)"
+        icon="payments"
+        tone="success"
+        [value]="d.collected30d | currency: currency : 'symbol' : '1.0-0'"
+        route="/billing"
+      />
+      <app-stat-card
+        label="Outstanding bills"
+        icon="receipt_long"
+        tone="error"
+        [value]="d.outstanding | currency: currency : 'symbol' : '1.0-0'"
+        [hint]="d.outstandingBills + ' open invoices'"
+        route="/billing"
+      />
+    }
+    @if (auth.can('employees:read')) {
+      <app-stat-card
+        label="Total employees"
+        icon="badge"
+        [value]="d.totalEmployees"
+        hint="Active staff"
+        route="/staff"
+      />
+    }
+    @if (auth.can('leave:read')) {
+      <app-stat-card
+        label="Pending leave requests"
+        icon="beach_access"
+        tone="warning"
+        [value]="alerts().pendingLeaves"
+        route="/staff/leave"
+      />
+    }
+    @if (auth.can('inventory:read') || auth.can('pharmacy:read')) {
+      <app-stat-card
+        label="Low stock alerts"
+        icon="inventory_2"
+        tone="warning"
+        [value]="alerts().lowStock"
+        hint="At or below reorder level"
+        [route]="auth.can('inventory:read') ? '/inventory' : '/pharmacy'"
+      />
+    }
+    @if (auth.can('pharmacy:read')) {
+      <app-stat-card
+        label="Expiring medicines"
+        icon="medication"
+        tone="error"
+        [value]="alerts().expiringMedicines"
+        hint="Expired or within 60 days"
+        route="/pharmacy"
+      />
+    }
+  </section>
+
+  <div class="grid two">
+    @if (auth.can('appointments:read')) {
+      <section class="app-card">
+        <app-trend-chart
+          title="Appointments per day (three days either side of today)"
+          type="line"
+          xLabel="Day"
+          yLabel="Appointments"
+          [labels]="d.appointmentTrend.labels"
+          [series]="[
+            { name: 'Booked', values: d.appointmentTrend.booked },
+            { name: 'Cancelled', values: d.appointmentTrend.cancelled },
+          ]"
+        />
+      </section>
+      <section class="app-card">
+        <app-trend-chart
+          title="Patient visits per day (completed appointments and admissions, last 7 days)"
+          type="bar"
+          xLabel="Day"
+          yLabel="Visits"
+          [labels]="d.visitTrend.labels"
+          [series]="[{ name: 'Visits', values: d.visitTrend.visits }]"
+        />
+      </section>
+    }
+  </div>
+
+  @if (auth.can('attendance:read')) {
+    <section class="app-card block" aria-labelledby="att-title">
+      <h2 id="att-title">Attendance summary (today)</h2>
+      <dl class="attendance">
+        <div>
+          <dt>Present</dt>
+          <dd>{{ d.attendanceToday.present }}</dd>
+        </div>
+        <div>
+          <dt>Late</dt>
+          <dd>{{ d.attendanceToday.late }}</dd>
+        </div>
+        <div>
+          <dt>Absent</dt>
+          <dd>{{ d.attendanceToday.absent }}</dd>
+        </div>
+        <div>
+          <dt>On leave</dt>
+          <dd>{{ d.attendanceToday.onLeave }}</dd>
+        </div>
+      </dl>
+    </section>
+  }
+
+  <div class="grid two">
+    @if (auth.can('appointments:read')) {
+      <section class="app-card" aria-labelledby="recent-appt">
+        <h2 id="recent-appt">Recent appointments</h2>
+        <div class="table-scroll">
+          <table class="simple">
+            <thead>
+              <tr>
+                <th scope="col">Patient</th>
+                <th scope="col">Doctor</th>
+                <th scope="col">When</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (a of d.recentAppointments; track a.id) {
+                <tr>
+                  <td>{{ a.patientName }}</td>
+                  <td>{{ a.doctorName }}</td>
+                  <td>{{ a.date | date: 'mediumDate' }} {{ a.time }}</td>
+                  <td><app-status-chip [status]="a.status" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+    @if (auth.can('patients:read')) {
+      <section class="app-card" aria-labelledby="recent-pat">
+        <h2 id="recent-pat">Recent patient registrations</h2>
+        <ul class="plain">
+          @for (p of d.recentPatients; track p.id) {
+            <li>
+              <a [routerLink]="['/patients', p.id]">{{ p.firstName }} {{ p.lastName }}</a>
+              <span class="text-muted"
+                >{{ p.medicalRecordNumber }} · {{ p.registrationDate | date: 'mediumDate' }}</span
+              >
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  </div>
+
+  <section class="app-card block" aria-labelledby="dept-title">
+    <h2 id="dept-title">Department summary</h2>
+    <div class="table-scroll">
+      <table class="simple">
+        <thead>
+          <tr>
+            <th scope="col">Department</th>
+            <th scope="col">Doctors</th>
+            <th scope="col">Appointments today</th>
+            <th scope="col">Inpatients</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (dep of d.departments; track dep.name) {
+            <tr>
+              <td>{{ dep.name }}</td>
+              <td>{{ dep.doctors }}</td>
+              <td>{{ dep.appointmentsToday }}</td>
+              <td>{{ dep.inpatients }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}

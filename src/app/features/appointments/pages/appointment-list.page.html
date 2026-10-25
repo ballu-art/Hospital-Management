@@ -1,0 +1,107 @@
+<app-page-header title="Appointments" subtitle="Schedule, reschedule and track appointments">
+  @if (auth.can('appointments:write')) {
+    <button mat-flat-button type="button" (click)="openForm(null, 'create')">
+      <mat-icon aria-hidden="true">add</mat-icon>
+      Book appointment
+    </button>
+  }
+</app-page-header>
+
+<mat-button-toggle-group
+  aria-label="Appointment view"
+  [value]="view()"
+  (change)="setView($event.value)"
+  class="view-toggle"
+>
+  <mat-button-toggle value="list">List</mat-button-toggle>
+  <mat-button-toggle value="schedule">Daily schedule</mat-button-toggle>
+</mat-button-toggle-group>
+
+@if (view() === 'list') {
+  <section class="app-card" aria-label="Appointment list">
+    <app-list-toolbar
+      searchLabel="Search by reason or date (YYYY-MM-DD)"
+      [search]="list.search()"
+      [filters]="filterDefs()"
+      [filterValues]="list.filters()"
+      (searchChange)="list.typeSearch($event)"
+      (filterChange)="list.setFilter($event.key, $event.value)"
+    />
+    @if (list.status() === 'error') {
+      <app-error-state [message]="list.error()" [retryable]="true" (retry)="list.reload()" />
+    } @else if (list.status() === 'loading' && list.items().length === 0) {
+      <app-loading-state message="Loading appointments…" />
+    } @else if (list.isEmpty()) {
+      @if (list.hasCriteria()) {
+        <app-empty-state
+          icon="search_off"
+          title="No matching appointments"
+          message="Try a different search or clear the filters."
+        >
+          <button mat-stroked-button type="button" (click)="list.clearCriteria()">
+            Clear search and filters
+          </button>
+        </app-empty-state>
+      } @else {
+        <app-empty-state
+          icon="event"
+          title="No appointments"
+          message="Booked appointments appear here."
+        >
+          @if (auth.can('appointments:write')) {
+            <button mat-flat-button type="button" (click)="openForm(null, 'create')">
+              Book appointment
+            </button>
+          }
+        </app-empty-state>
+      }
+    } @else {
+      @if (list.status() === 'loading') {
+        <mat-progress-bar mode="indeterminate" aria-label="Refreshing appointments" />
+      }
+      <app-data-table
+        caption="Appointments"
+        [columns]="columns"
+        [rows]="list.items()"
+        [total]="list.total()"
+        [pageIndex]="list.pageIndex()"
+        [pageSize]="list.pageSize()"
+        [sort]="list.sort()"
+        [actions]="actions()"
+        (sortChange)="list.setSort($event)"
+        (pageChange)="list.setPage($event.pageIndex, $event.pageSize)"
+        (action)="onAction($event)"
+      />
+    }
+  </section>
+} @else {
+  <section class="app-card" aria-label="Daily schedule">
+    <div class="controls">
+      <mat-form-field>
+        <mat-label>Date</mat-label>
+        <input matInput [matDatepicker]="dayPicker" [formControl]="day" />
+        <mat-datepicker-toggle matIconSuffix [for]="dayPicker" />
+        <mat-datepicker #dayPicker />
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Doctor</mat-label>
+        <mat-select [value]="scheduleDoctor()" (selectionChange)="scheduleDoctor.set($event.value)">
+          <mat-option value="">All doctors</mat-option>
+          @for (d of doctors.items().values(); track d.id) {
+            <mat-option [value]="d.id">{{ doctors.label(d.id) }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+    @if (scheduleLoading()) {
+      <app-loading-state message="Loading schedule…" />
+    } @else {
+      <app-daily-schedule
+        [appointments]="dayAppointments()"
+        [patientName]="patients.label"
+        [doctorName]="doctors.label"
+        [doctorId]="scheduleDoctor()"
+      />
+    }
+  </section>
+}

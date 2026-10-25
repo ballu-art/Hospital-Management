@@ -1,0 +1,70 @@
+<mat-toolbar class="topbar">
+  <button
+    mat-icon-button
+    type="button"
+    aria-label="Toggle navigation menu"
+    aria-controls="app-sidenav"
+    [attr.aria-expanded]="menuExpanded()"
+    (click)="menuToggle.emit()"
+  >
+    <mat-icon aria-hidden="true">menu</mat-icon>
+  </button>
+
+  <a class="brand" routerLink="/dashboard">
+    <mat-icon aria-hidden="true">local_hospital</mat-icon>
+    <span class="brand-name">{{ hospital().name }}</span>
+  </a>
+
+  <span class="spacer"></span>
+
+  @if (auth.can('patients:read')) {
+    <form class="search" role="search" (ngSubmit)="search()">
+      <mat-icon aria-hidden="true">search</mat-icon>
+      <input
+        type="search"
+        aria-label="Search patients by name, ID or phone"
+        placeholder="Search patients…"
+        [formControl]="searchControl"
+      />
+    </form>
+  }
+
+  <button
+    mat-icon-button
+    type="button"
+    [matMenuTriggerFor]="notificationMenu"
+    [matBadge]="notificationCount()"
+    [matBadgeHidden]="notificationCount() === 0"
+    matBadgeSize="small"
+    matBadgeDescription="open alerts"
+    [attr.aria-label]="'Notifications, ' + notificationCount() + ' open alerts'"
+  >
+    <mat-icon aria-hidden="true">notifications</mat-icon>
+  </button>
+  <mat-menu #notificationMenu="matMenu">
+    @for (n of notifications(); track n.route) {
+      <a mat-menu-item [routerLink]="n.route">
+        <mat-icon aria-hidden="true">{{ n.icon }}</mat-icon>
+        <span>{{ n.count }} {{ n.text }}</span>
+      </a>
+    } @empty {
+      <span class="menu-note">No open alerts.</span>
+    }
+  </mat-menu>
+
+  <button mat-button type="button" class="user" [matMenuTriggerFor]="userMenu">
+    <mat-icon aria-hidden="true">account_circle</mat-icon>
+    <span class="user-name">{{ auth.user()?.name }}</span>
+  </button>
+  <mat-menu #userMenu="matMenu">
+    <div class="menu-note" role="presentation">
+      <strong>{{ auth.user()?.name }}</strong
+      ><br />
+      {{ auth.user() ? roleLabels[auth.user()!.role] : '' }} (demo)
+    </div>
+    <button mat-menu-item type="button" (click)="signOut()">
+      <mat-icon aria-hidden="true">logout</mat-icon>
+      <span>Sign out</span>
+    </button>
+  </mat-menu>
+</mat-toolbar>

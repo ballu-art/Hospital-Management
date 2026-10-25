@@ -1,0 +1,82 @@
+<h2 mat-dialog-title>{{ heading }}</h2>
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <mat-dialog-content>
+    @if (saving()) {
+      <mat-progress-bar mode="indeterminate" aria-label="Saving" />
+    }
+    <div class="app-form-grid">
+      @for (f of fields; track f.key) {
+        @if (f.type === 'date') {
+          <mat-form-field>
+            <mat-label>{{ f.label }}</mat-label>
+            <input matInput [matDatepicker]="picker" [formControlName]="f.key" />
+            <mat-datepicker-toggle matIconSuffix [for]="picker" />
+            <mat-datepicker #picker />
+            @if (f.hint) {
+              <mat-hint>{{ f.hint }}</mat-hint>
+            }
+            @if (invalid(form.controls[f.key])) {
+              <mat-error>{{ errorOf(f.key) }}</mat-error>
+            }
+          </mat-form-field>
+        } @else {
+          <mat-form-field [class.full-width]="f.fullWidth || f.type === 'textarea'">
+            <mat-label>{{ f.label }}</mat-label>
+            @switch (f.type) {
+              @case ('select') {
+                <mat-select [formControlName]="f.key">
+                  @if (!f.required) {
+                    <mat-option value="">None</mat-option>
+                  }
+                  @for (o of optionsOf(f); track o.value) {
+                    <mat-option [value]="o.value">{{ o.label }}</mat-option>
+                  }
+                </mat-select>
+              }
+              @case ('textarea') {
+                <textarea
+                  matInput
+                  rows="3"
+                  [formControlName]="f.key"
+                  [attr.maxlength]="f.maxLength ?? null"
+                ></textarea>
+              }
+              @default {
+                <input
+                  matInput
+                  [type]="f.type"
+                  [formControlName]="f.key"
+                  [attr.min]="f.min ?? null"
+                  [attr.max]="f.max ?? null"
+                  [attr.step]="f.type === 'number' ? 'any' : null"
+                />
+              }
+            }
+            @if (f.hint) {
+              <mat-hint>{{ f.hint }}</mat-hint>
+            }
+            @if (invalid(form.controls[f.key])) {
+              <mat-error>{{ errorOf(f.key) }}</mat-error>
+            }
+          </mat-form-field>
+        }
+      }
+    </div>
+    @if (attempted() && form.invalid) {
+      <p class="error" role="alert">Please correct the highlighted fields.</p>
+    }
+    @if (serverError()) {
+      <p class="error" role="alert">{{ serverError() }}</p>
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>
+      {{ data.mode === 'view' ? 'Close' : 'Cancel' }}
+    </button>
+    @if (data.mode !== 'view') {
+      <button mat-flat-button type="submit" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : 'Save' }}
+      </button>
+    }
+  </mat-dialog-actions>
+</form>

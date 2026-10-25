@@ -1,0 +1,36 @@
+@use 'breakpoints' as bp;
+
+:host {
+  display: block;
+}
+
+a {
+  color: var(--app-color-primary);
+  font-weight: 500;
+}
+
+.end {
+  text-align: end;
+}
+
+.actions-col {
+  width: 56px;
+  text-align: end;
+}
+
+.destructive {
+  color: var(--app-color-error);
+  --mat-menu-item-icon-color: var(--app-color-error);
+}
+
+@include bp.below(bp.$bp-sm) {
+  .hide-sm {
+    display: none;
+  }
+}
+
+@include bp.below(bp.$bp-md) {
+  .hide-md {
+    display: none;
+  }
+}
